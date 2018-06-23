@@ -1,0 +1,9 @@
+# Generated files
+doc/
+component/soc/realtek/8711b/
+SI/
+tools/
+project/realtek_amebaz_va0_example/
+project/realtek_ameba1_va0_example/example_sources/
+project/realtek_ameba1_va0_example/EWARM-RELEASE/Debug/
+

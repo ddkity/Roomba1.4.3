@@ -1,0 +1,55 @@
+#
+# Copyright 2017 Ayla Networks, Inc.  All rights reserved.
+#
+
+AMEBA_TARGET = mp flash setup
+AYLA_TARGET = firmware aylacode aylalibs aylademo dbgsvr
+
+.PHONY: $(AYLA_TARGET) $(AMEBA_TARGET)
+.PHONY: firmware_iar firmware_gcc
+
+SRC ?= .
+
+ifeq ($(shell uname -o), Cygwin)
+BUILD_TOOL ?= iar
+else
+BUILD_TOOL ?= gcc
+endif
+
+ifeq ($(BUILD_TOOL),iar)
+PRJ_DIR := ./project/realtek_ameba1_va0_example/EWARM-RELEASE
+else
+PRJ_DIR := $(SRC)/project/realtek_ameba1_va0_example/GCC-RELEASE
+endif
+
+firmware: firmware_$(BUILD_TOOL)
+
+firmware_iar:
+	@echo "========================================================================="; \
+	echo " IarBuild is a Windows tool, for console buffer reasons it don't updated"; \
+	echo " in time in the Cygwin environment, please be patient"; \
+	echo "========================================================================="
+	cd $(SRC); \
+	IarBuild.exe $(PRJ_DIR)/Project.ewp -make Debug
+
+firmware_gcc:
+	@$(MAKE) -C $(PRJ_DIR) mp
+	@$(MAKE) -C $(PRJ_DIR) setup GDB_SERVER=openocd
+
+aylacode: aylademo aylalibs
+
+aylalibs:
+	@make BUILD_TOOL=$(BUILD_TOOL) -C $(SRC)/component/common/ayla
+
+aylademo:
+	@echo " -------------------------------"
+	@echo "  Build Ayla demo ..."
+	@echo " -------------------------------"
+	@make BUILD_TOOL=$(BUILD_TOOL) -C $(SRC)/component/common/application/ayla_demo
+
+dbgsvr:
+	openocd -f interface/cmsis-dap.cfg -f $(SRC)/component/soc/realtek/8195a/misc/gcc_utility/openocd/ameba1.cfg
+
+$(AMEBA_TARGET):
+	$(MAKE) -C $(PRJ_DIR) $@
+

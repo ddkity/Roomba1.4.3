@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css" media="screen">
+
+<script type="text/javascript">
+
+function banner(title)
+{
+	document.writeln("<title>" + title + "</title>" +
+	    "</head><body><h1>" + title + "</h1");
+}
+
+req = new XMLHttpRequest();
+req.open("GET", "regtoken.json", false);
+req.send();
+var resp = JSON.parse(req.responseText);
+
+banner(resp.host_symname + " " + "Device Registration Code");
+document.writeln("<center><p><b><big>" + resp.regtoken + "</big></b>");
+</script>
+<br><p>
+Type or paste the above code into the Device Registration form to register
+this device.
+</center>
+</body>
+</html>

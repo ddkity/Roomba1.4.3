@@ -1,0 +1,19 @@
+#
+# How to make wifi.js.txt
+#
+wifi.js.txt is made from wifi.js using yui-compressor.  This just eliminates
+white space and comments and shortens all the variable names.  It saves around
+2K of flash out of a 7K source file.
+
+Get the yui-compressor package and do this:
+
+	/usr/bin/yui-compressor -o wifi.js.txt wifi.js
+
+This requires Java and perhaps other packages on the build system, so
+rather than do this in the makefiles, we check in the compressed version
+as well.  
+
+See Joe if you need minor mods to wifi.js and want to compress it
+but don't want the hassle of setting up yui-compressor.  Its fine to
+test wifi.js by just copying it to wifi.js.txt, but please don't check it in
+without compressing it.

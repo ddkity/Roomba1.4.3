@@ -1,0 +1,6 @@
+#define BUILD_NAME "-beta"
+#define BUILD_DATE "2018-03-28"
+#define BUILD_TIME "19:20:06"
+#define ADA_VERSION "1.4.3"
+#define BUILD_SDK "ameba"
+#define BUILD_VERSION "8f40fe89d"

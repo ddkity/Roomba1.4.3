@@ -1,0 +1,7 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes"/>
+<link rel="stylesheet" href="style.css" type="text/css" media="screen">
+<script type="text/javascript" src=wifi.js></script>
+</body>
