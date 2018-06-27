@@ -8,13 +8,15 @@
 
 "-p" 
 
-"E:\工作\艾拉方案\软件\ayla_sweep_robot1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\8195a.ddf" 
+"E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\8195a.ddf" 
 
 "--semihosting=none" 
 
 "--drv_communication=USB0" 
 
-"--drv_interface_speed=100" 
+"--drv_interface_speed=auto" 
+
+"--jlink_initial_speed=1000" 
 
 "--jlink_reset_strategy=0,0" 
 

@@ -18,7 +18,7 @@
  * If these are changed, the encrypted OEM secret must be re-encrypted
  * unless the oem_model "*" (wild-card) when the oem_key was encrypted.
  */
-#define DEMO_OEM_ID	"54505428"	/* replace with your Ayla OEM ID */
+#define DEMO_OEM_ID	"cdbae6fc"	/* replace with your Ayla OEM ID */
 #define DEMO_ILIFE_MODEL "ilife-0-0-dev"
 #define DEMO_OUTLET_MODEL "smartplug1"
 

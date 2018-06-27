@@ -27,8 +27,9 @@
 #define BUILD_PROGNAME "ILIFESWEEPER"
 /****************************************************************************
 	1.0.4	解决报错:[ada] 01:56:30.988 W s ssl: [218]TLS:2 err=-0x7200
+	1.0.5	切换到了智意ayla的中国量产域
 ****************************************************************************/
-#define BUILD_VERSION "1.0.4"
+#define BUILD_VERSION "1.0.5"
 #define BUILD_STRING	BUILD_VERSION " "  __DATE__ " " __TIME__
 
 //const char mod_sw_build[] = BUILD_STRING;
