@@ -19,7 +19,7 @@
  * unless the oem_model "*" (wild-card) when the oem_key was encrypted.
  */
 #define DEMO_OEM_ID	"cdbae6fc"	/* replace with your Ayla OEM ID */
-#define DEMO_ILIFE_MODEL "ilife-0-0-dev"
+#define DEMO_ILIFE_MODEL "ilife-0-0"
 #define DEMO_OUTLET_MODEL "smartplug1"
 
 /* define a key to enable the setup mode for development */
