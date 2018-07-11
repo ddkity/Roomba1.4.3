@@ -29,8 +29,9 @@
 	1.0.4	解决报错:[ada] 01:56:30.988 W s ssl: [218]TLS:2 err=-0x7200
 	1.0.5	切换到了智意ayla的中国量产域
 	1.0.6	更改oem model为ilife-0-0
+	1.0.7	1、添加log查看当模组掉线的时候是因为什么掉线的。2、在首次上电的时候会忽略自动更新的属性，之后有自动更新属性的也不会忽略，防止丢失属性设置
 ****************************************************************************/
-#define BUILD_VERSION "1.0.6"
+#define BUILD_VERSION "1.0.7"
 #define BUILD_STRING	BUILD_VERSION " "  __DATE__ " " __TIME__
 
 //const char mod_sw_build[] = BUILD_STRING;
@@ -108,7 +109,7 @@ extern unsigned char ILITE_NetConnetFlag;	//网络连接标志，1表示连接上了路由，0表
 
 /* 网络准备好了，下发的属性才能有效，否则丢弃当前下发的属性值，防止在设备的时候下发属性 */
 unsigned char NetIsReady = 0;
-
+unsigned char UpdatePropertyFlag = 0;	/* 属性更新标志，用于设置只有在上电联网首次更新所有属性的时候忽略的标志 */
 static enum ada_err t_onedata_property_set(struct ada_sprop *sprop, const void *buf, size_t len)
 {
 	int ret;
@@ -171,7 +172,7 @@ static enum ada_err t_onedata_property_set(struct ada_sprop *sprop, const void *
 
 	log_put(LOG_INFO "%s set to %d.\n", sprop->name, *(u8 *)sprop->val);
 	
-	if(NetIsReady != 1){
+	if((NetIsReady != 1) && (UpdatePropertyFlag == 0)){
 		printf("ignore property %s\n", sprop->name);
 		return AE_OK;
 	}
@@ -211,7 +212,7 @@ static enum ada_err t_twodata_property_set(struct ada_sprop *sprop, const void *
 	}
 
 	log_put(LOG_INFO "%s set to %d.\n", sprop->name, *(u8 *)sprop->val);
-	if(NetIsReady != 1){
+	if((NetIsReady != 1) && (UpdatePropertyFlag == 0)){
 		printf("ignore property %s\n", sprop->name);
 		return AE_OK;
 	}
@@ -238,7 +239,7 @@ static enum ada_err t_fivedata_property_set(struct ada_sprop *sprop, const void 
 	Data[5] = t_reset_power & 0xFF;
 	
 	log_put(LOG_INFO "%s set to %d.\n", sprop->name, *(u8 *)sprop->val);
-	if(NetIsReady != 1){
+	if((NetIsReady != 1) && (UpdatePropertyFlag == 0)){
 		printf("ignore property %s\n", sprop->name);
 		return AE_OK;
 	}
@@ -329,7 +330,7 @@ static enum ada_err t_timer_set(struct ada_sprop *sprop,
 	memset(Data, 0x00, 5);
 	
 	log_put(LOG_INFO "%s set to %s.\n", sprop->name, (u8 *)sprop->val);
-	if(NetIsReady != 1){
+	if((NetIsReady != 1) && (UpdatePropertyFlag == 0)){
 		printf("ignore property %s\n", sprop->name);
 		return AE_OK;
 	}
@@ -528,12 +529,15 @@ void demo_idle(void)
 			}
 			NetworkUp = 1;
 			NetIsReady = 1;
+			UpdatePropertyFlag = 1;
 		}
 		else
 		{
 			PropertySendOK = 0;
 			if((NetworkUp == 1))
 			{
+				/* 添加log信息，查看当掉线的时候是什么原因导致的 */
+				printf("ILITE_NetConnetFlag = %d, (ada_sprop_dest_mask & NODES_ADS) = %d, ada_conf.reg_user = %d\n", ILITE_NetConnetFlag, (ada_sprop_dest_mask & NODES_ADS), ada_conf.reg_user);
 				NetworkUp = 0;
 				vTaskDelay(100);
 				SendNetWorkStatus(0);
