@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.general.xcl" --backend -f "E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "E:\工作\艾拉方案\软件\ilife-sweeper\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.general.xcl" --backend -f "E:\工作\艾拉方案\软件\ilife-sweeper\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.general.xcl" "--debug_file=%~1" --backend -f "E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "E:\工作\艾拉方案\软件\ilife-sweeper\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.general.xcl" "--debug_file=%~1" --backend -f "E:\工作\艾拉方案\软件\ilife-sweeper\project\realtek_ameba1_va0_example\EWARM-RELEASE\settings\Project.Debug.driver.xcl" 
 
 @echo off 
 :end

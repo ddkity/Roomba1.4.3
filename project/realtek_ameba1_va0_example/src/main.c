@@ -25,9 +25,6 @@ void main(void)
 	wlan_network();
 #endif
 
-	sysreleasewakelock();
-	releasewakelock();
-
 	/* Execute application example */
 	/* example_entry(); */
 

@@ -8,7 +8,7 @@
 
 "-p" 
 
-"E:\GitHubDir\Roomba1.4.3\project\realtek_ameba1_va0_example\EWARM-RELEASE\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\8195a.ddf" 
+"E:\工作\艾拉方案\软件\ilife-sweeper\project\realtek_ameba1_va0_example\EWARM-RELEASE\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\8195a.ddf" 
 
 "--semihosting=none" 
 
@@ -19,6 +19,8 @@
 "--jlink_initial_speed=1000" 
 
 "--jlink_reset_strategy=0,0" 
+
+"--drv_interface=SWD" 
 
 "--drv_catch_exceptions=0x000" 
 

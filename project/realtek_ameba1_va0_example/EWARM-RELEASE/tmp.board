@@ -2,7 +2,7 @@
   
 <flash_board> 
   <pass>    
-  	<range>CODE 0x10000bc8 0xFFFFFFFE</range>    
+  	<range>CODE 0x10000bc8 0x10005FFF</range>    
     <loader>$PROJ_DIR$\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\flashloader\FlashRTL8195aMP.flash</loader>    
     <abs_offset>0x00000000</abs_offset>    
     <args>--head    
@@ -10,19 +10,20 @@
     0xB000</args>    
   </pass>    
   <pass> 
-  	<range>CODE 0xFFFFFFFF 0xFFFFFFFE</range> 
+  	<range>CODE 0x10006000 0x1004E927</range> 
     <loader>$PROJ_DIR$\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\flashloader\FlashRTL8195aMP.flash</loader>    
     <abs_offset>0xB000</abs_offset>  
-    <args>--end</args>   		
   </pass> 
   <pass>    
-  	<range>CODE 0x0xFFFFFFFF 0xFFFFFFFF</range>    
+  	<range>CODE 0x30000000 0x3003D63F</range>    
     <loader>$PROJ_DIR$\..\..\..\component\soc\realtek\8195a\misc\iar_utility\common\flashloader\FlashRTL8195aMP.flash</loader>      
-    <abs_offset>0xA4000</abs_offset>    
+    <abs_offset>0x0000</abs_offset>    
+    <args>--cascade  
+    --end</args>    
   </pass>    
   <ignore>CODE 0x00000000 0x000FFFFF</ignore>  
   <ignore>CODE 0x10000000 0x10000bc7</ignore> 
-  <ignore>CODE 0xFFFFFFFF 0x1006FFFF</ignore> 
+  <ignore>CODE 0x1004e928 0x1006FFFF</ignore> 
   <ignore>CODE 0x1FFF0000 0x1FFFFFFF</ignore> 
-  <ignore>CODE 0xFFFFFFFF 0x3FFFFFFF</ignore> 
+  <ignore>CODE 0x3003d640 0x3FFFFFFF</ignore> 
 </flash_board> 

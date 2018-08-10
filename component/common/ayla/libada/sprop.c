@@ -28,6 +28,10 @@
 #include "client_lock.h"
 #include "client_timer.h"
 
+#include "ilifesweeper.h"
+
+extern unsigned char  PropertySendDoneFlag[43];
+
 struct ada_sprop_entry {
 	char name[SPROP_NAME_MAX_LEN];
 	struct ada_sprop *table;
@@ -177,6 +181,188 @@ static void ada_sprop_ready_cb(void *arg)
 	}
 }
 
+void PropertySendDoneFlagCnt(const char *name)
+{ 
+	//vTaskSuspendAll();
+	if(strcmp(name, "f_battery") == 0){
+		PropertySendDoneFlag[PP_f_battery] = PropertySendDoneFlag[PP_f_battery] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_work_mode") == 0){
+		PropertySendDoneFlag[PP_t_work_mode] = PropertySendDoneFlag[PP_t_work_mode] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_error") == 0){
+		PropertySendDoneFlag[PP_f_error] = PropertySendDoneFlag[PP_f_error] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_d_strength") == 0){
+		PropertySendDoneFlag[PP_t_d_strength] = PropertySendDoneFlag[PP_t_d_strength] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_p_strength") == 0){
+		PropertySendDoneFlag[PP_t_p_strength] = PropertySendDoneFlag[PP_t_p_strength] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_clean_record") == 0){
+		PropertySendDoneFlag[PP_f_clean_record] = PropertySendDoneFlag[PP_f_clean_record] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_upload_realmap_starttime") == 0){
+		PropertySendDoneFlag[PP_f_upload_realmap_starttime] = PropertySendDoneFlag[PP_f_upload_realmap_starttime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_realtime_mapinfo") == 0){
+		PropertySendDoneFlag[PP_f_realtime_mapinfo] = PropertySendDoneFlag[PP_f_realtime_mapinfo] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_factory_reset") == 0){
+		PropertySendDoneFlag[PP_t_factory_reset] = PropertySendDoneFlag[PP_t_factory_reset] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_edge_brush_lifetime") == 0){
+		PropertySendDoneFlag[PP_f_edge_brush_lifetime] = PropertySendDoneFlag[PP_f_edge_brush_lifetime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_roll_brush_lifetime") == 0){
+		PropertySendDoneFlag[PP_f_roll_brush_lifetime] = PropertySendDoneFlag[PP_f_roll_brush_lifetime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_filter_lifetime") == 0){
+		PropertySendDoneFlag[PP_f_filter_lifetime] = PropertySendDoneFlag[PP_f_filter_lifetime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_duster_lifetime") == 0){
+		PropertySendDoneFlag[PP_f_duster_lifetime] = PropertySendDoneFlag[PP_f_duster_lifetime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_battery_lifetime") == 0){
+		PropertySendDoneFlag[PP_f_battery_lifetime] = PropertySendDoneFlag[PP_f_battery_lifetime] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_0") == 0){
+		PropertySendDoneFlag[PP_t_timer_0] = PropertySendDoneFlag[PP_t_timer_0] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_1") == 0){
+		PropertySendDoneFlag[PP_t_timer_1] = PropertySendDoneFlag[PP_t_timer_1] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_2") == 0){
+		PropertySendDoneFlag[PP_t_timer_2] = PropertySendDoneFlag[PP_t_timer_2] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_3") == 0){
+		PropertySendDoneFlag[PP_t_timer_3] = PropertySendDoneFlag[PP_t_timer_3] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_4") == 0){
+		PropertySendDoneFlag[PP_t_timer_4] = PropertySendDoneFlag[PP_t_timer_4] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_5") == 0){
+		PropertySendDoneFlag[PP_t_timer_5] = PropertySendDoneFlag[PP_t_timer_5] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_6") == 0){
+		PropertySendDoneFlag[PP_t_timer_6] = PropertySendDoneFlag[PP_t_timer_6] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_7") == 0){
+		PropertySendDoneFlag[PP_t_timer_7] = PropertySendDoneFlag[PP_t_timer_7] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_8") == 0){
+		PropertySendDoneFlag[PP_t_timer_8] = PropertySendDoneFlag[PP_t_timer_8] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_timer_9") == 0){
+		PropertySendDoneFlag[PP_t_timer_9] = PropertySendDoneFlag[PP_t_timer_9] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_control") == 0){
+		PropertySendDoneFlag[PP_t_control] = PropertySendDoneFlag[PP_t_control] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_search") == 0){
+		PropertySendDoneFlag[PP_t_search] = PropertySendDoneFlag[PP_t_search] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_realtime_info") == 0){
+		PropertySendDoneFlag[PP_t_realtime_info] = PropertySendDoneFlag[PP_t_realtime_info] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "oem_host_version") == 0){
+		PropertySendDoneFlag[PP_oem_host_version] = PropertySendDoneFlag[PP_oem_host_version] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "version") == 0){
+		PropertySendDoneFlag[PP_version] = PropertySendDoneFlag[PP_version] - 1;
+		goto PROPOUT;
+	}
+//////////////////////////////////////////////////////////////////////////////////
+	if(strcmp(name, "t_room_mode") == 0){
+		PropertySendDoneFlag[PP_t_room_mode] = PropertySendDoneFlag[PP_t_room_mode] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_sound") == 0){
+		PropertySendDoneFlag[PP_t_sound] = PropertySendDoneFlag[PP_t_sound] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_light") == 0){
+		PropertySendDoneFlag[PP_t_light] = PropertySendDoneFlag[PP_t_light] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_work_time") == 0){
+		PropertySendDoneFlag[PP_f_work_time] = PropertySendDoneFlag[PP_f_work_time] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_water_box_time") == 0){
+		PropertySendDoneFlag[PP_f_water_box_time] = PropertySendDoneFlag[PP_f_water_box_time] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_dustbin_time") == 0){
+		PropertySendDoneFlag[PP_f_dustbin_time] = PropertySendDoneFlag[PP_f_dustbin_time] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_mul_box_time") == 0){
+		PropertySendDoneFlag[PP_f_mul_box_time] = PropertySendDoneFlag[PP_f_mul_box_time] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_upload_realmap_switch") == 0){
+		PropertySendDoneFlag[PP_f_upload_realmap_switch] = PropertySendDoneFlag[PP_f_upload_realmap_switch] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_reset_edge_brush") == 0){
+		PropertySendDoneFlag[PP_t_reset_edge_brush] = PropertySendDoneFlag[PP_t_reset_edge_brush] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_reset_roll_brush") == 0){
+		PropertySendDoneFlag[PP_t_reset_roll_brush] = PropertySendDoneFlag[PP_t_reset_roll_brush] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_reset_filter") == 0){
+		PropertySendDoneFlag[PP_t_reset_filter] = PropertySendDoneFlag[PP_t_reset_filter] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_reset_duster") == 0){
+		PropertySendDoneFlag[PP_t_reset_duster] = PropertySendDoneFlag[PP_t_reset_duster] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "t_reset_power") == 0){
+		PropertySendDoneFlag[PP_t_reset_power] = PropertySendDoneFlag[PP_t_reset_power] - 1;
+		goto PROPOUT;
+	}
+	if(strcmp(name, "f_clean_mode") == 0){
+		PropertySendDoneFlag[PP_f_clean_mode] = PropertySendDoneFlag[PP_f_clean_mode] - 1;
+		goto PROPOUT;
+	}
+
+PROPOUT:
+	//xTaskResumeAll();
+	//client_log(LOG_DEBUG "%s: sent \"%s\"", __func__, name);
+        return;
+}
 static void ada_sprop_mgr_send_done(enum prop_cb_status status,
 	u8 fail_mask, void *cb_arg)
 {
@@ -203,6 +389,7 @@ static void ada_sprop_mgr_send_done(enum prop_cb_status status,
 			dests &= ~fail_mask;
 		}
 	} else {
+		PropertySendDoneFlagCnt(prop->name);
 		client_log(LOG_DEBUG "%s: sent \"%s\"", __func__, prop->name);
 	}
 
@@ -242,6 +429,17 @@ static void ada_sprop_mgr_event(enum prop_mgr_event event, const void *arg)
 		}
 		sprop->send_req = 1;
 		break;
+	#if 1		//add by YUJUNWU default 0
+	case PME_TIME:
+		// add by huangjituan
+		if(0 == g_TimezoneChange){
+			g_TimezoneChange = 1;
+			client_log(LOG_INFO " g_TimezoneChange set to 1.Time zone is update\n\n");
+		}
+		client_log(LOG_INFO "time is update, tell MCU\n\n");
+		break;
+	#endif
+	
 	default:
 		break;
 	}

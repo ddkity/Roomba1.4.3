@@ -24,6 +24,12 @@
 #define CLIENT_RETRY_WAIT2	300000	/* retry wait till threshold */
 #define CLIENT_RETRY_WAIT3	600000	/* retry wait after threshold */
 
+//add by yujunwu
+extern int g_first_get_cmds;
+
+//add by huangjituan
+extern int g_TimezoneChange;
+
 enum client_conn_state {
 	CS_DOWN,
 	CS_DISABLED,	/* network up but client not enabled */

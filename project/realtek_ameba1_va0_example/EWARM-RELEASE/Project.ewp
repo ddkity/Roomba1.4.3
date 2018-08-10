@@ -3694,6 +3694,7 @@
             <state>$PROJ_DIR$\..\..\..\component\common\media\muxer</state>
             <state>$PROJ_DIR$\..\..\..\component\common\application\mqtt\MQTTClient</state>
             <state>$PROJ_DIR$\..\..\..\component\common\ayla\libadw\ameba</state>
+            <state>$PROJ_DIR$\..\..\..\component\common\application\ayla_demo\src</state>
           </option>
           <option>
             <name>CCCodeSection</name>
@@ -3715,6 +3716,9 @@
     <name>ayla-ameba</name>
     <group>
       <name>Demo</name>
+      <file>
+        <name>$PROJ_DIR$\..\..\..\component\common\application\ayla_demo\src\led_key.c</name>
+      </file>
     </group>
     <group>
       <name>libadw</name>

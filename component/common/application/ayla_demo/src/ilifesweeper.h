@@ -1,53 +1,53 @@
 #ifndef __ILIFESWEEPER_H__
 #define __ILIFESWEEPER_H__
 
-#define SendMAXLen (64)
-#define RecvMAXLen (1024 + 8)
+#define SendMAXLen 		(64)
+#define RecvMAXLen 		(1024 + 8)
 
 /************串口通信命令宏定义***************/
-#define UartNOP  	(0)           /*  串口接收错误或空闲	*/
-#define UartSOP  	(1)           /*  接收起始位		*/
+#define UartNOP  		(0)           /*  串口接收错误或空闲	*/
+#define UartSOP  		(1)           /*  接收起始位		*/
 #define UartLEN_H  	(2)           /*  接收长度			*/
 #define UartLEN_L  	(3)           /*  接收长度			*/
 #define UartRESV_H	(4)			  /*  保留位1			*/
 #define UartRESV_L	(5)			  /*  保留位2			*/
-#define UartCMD  	(6)           /*  接收命令			*/
-#define UartDATA 	(7)           /*  接收数据			*/
-#define UartCRC  	(8)           /*  数据长度为0 		*/
-#define UartEND  	(9)           /*  接收结束标志*/
+#define UartCMD  		(6)           /*  接收命令			*/
+#define UartDATA 		(7)           /*  接收数据			*/
+#define UartCRC  		(8)           /*  数据长度为0 		*/
+#define UartEND  		(9)           /*  接收结束标志*/
 
 //串口帧结构定义
-#define F_HEAD  (0x5A)	//帧头
-#define F_END   (0x5B)	//帧尾
+#define F_HEAD  		(0x5A)	//帧头
+#define F_END  		(0x5B)	//帧尾
 
 /* 发送失败重发次数定义和发送时间间隔定义 */
-#define SENDDELAYTIME (5)	/* 5ms检查一次 */
-#define SENDGAPTIME (160)	/* 160 * 5ms = 800ms */
-#define SENDCNT		(318)	/* 发送318*5ms=1590ms左右还没有回复，发送超时，退出 */
+#define SENDDELAYTIME 		(5)	/* 5ms检查一次 */
+#define SENDGAPTIME 			(400)	/* 160 * 5ms = 800ms */
+#define SENDCNT				(796)	/* 发送318*5ms=1590ms左右还没有回复，发送超时，退出 */
 
 //命令值定义:
 #define CMDRequeryDeviceStatus 	(0x41)
 #define CMDRequeryTimerInfo		(0x42)
 #define CMDRequeryLifeTime		(0x44)
-#define CMDRequeryFWVersion	(0x45)
+#define CMDRequeryFWVersion		(0x45)
 //测试用添加
 #define CMDRequeryMACAddr		(0xA1)	//获取mac地址
-#define CMDRequerySWVersion	(0xA2)	//获取8711am软件版本
+#define CMDRequerySWVersion		(0xA2)	//获取8711am软件版本
 
 #define CMDDownWorkMode 		(0x46)
 #define CMDDownRoomMode 		(0x47)
-#define CMDDownCleanStrength 	(0x48)
+#define CMDDownCleanStrength 		(0x48)
 #define CMDDownControl			(0x49)
 #define CMDDownTimer			(0x4A)
 #define CMDDownReset			(0x4B)
 #define CMDDownCalTime			(0x4C)
 #define CMDDownupRealtimeInfo	(0x4D)
 #define CMDDownDisturb			(0x4E)
-#define CMDDownFactoryReset	(0x4F)
+#define CMDDownFactoryReset		(0x4F)
 #define CMDDownSearch			(0x50)
 
 #define CMDUpLoadStatus			(0xC8)
-#define CMDUpLoadCleanRecord	(0xC9)
+#define CMDUpLoadCleanRecord		(0xC9)
 #define CMDUpLoadMapInfo		(0xCA)
 #define CMDUpLoadSumTime		(0xCB)
 #define CMDUpLoadFactoryReset	(0xCC)
@@ -55,13 +55,13 @@
 #define CMDUpLoadLifeTime		(0xCE)
 #define CMDUpLoadAppointmentInfo	(0xCF)
 #define CMDUpLoadReset			(0xD0)
-#define CMDUpLoadSearch		(0xD1)
-#define CMDUpLoadControl		(0xD2)
+#define CMDUpLoadSearch			(0xD1)
+#define CMDUpLoadControl			(0xD2)
 #define CMDUpLoadFWVersion		(0xD3)
 #define CMDUpLoadRealTimeStart 	(0xD4)
-#define CMDUpLoadRealInfoSwitch (0xD5)
+#define CMDUpLoadRealInfoSwitch 	(0xD5)
 
-#define CMDSysNetWorking		(0x02)
+#define CMDSysNetWorking			(0x02)
 #define CMDSysNetBroken			(0x03)
 #define CMDSysCloudWorking		(0x04)
 #define CMDSysCloudBroken		(0x05)
@@ -84,7 +84,7 @@ struct RingRecvBuffer_t{
 	unsigned char Data[RecvMAXLen];	/* 缓冲数据实体，包含一帧数据的CMD字段和数据字段 */
 };
 
-extern struct RingSendBuffer_t RingSendBuffer[SENDBUFFERMAXLEN];
+//extern struct RingSendBuffer_t RingSendBuffer[SENDBUFFERMAXLEN];	/*没有在其他的文件使用这个变量，所以不用声明了 */
 
 
 //属性变量
@@ -141,30 +141,58 @@ extern unsigned char t_timer_temp[11];
 /* 网络接口定义 */
 extern struct netif xnetif[NET_IF_NUM]; 
 
-void WriteRingBuffer(unsigned char *Data, unsigned short Len);
-void ILIFESweeperInit(void);
-void PRINTFSendBuffer(const unsigned char *SendFormData, unsigned short Len);
-void prop_send_by_name(const char *name);
-
 /* 系统属性 */
 extern char version_temp[];
 extern char version[64];
 extern char MCUFWversion[12];
-extern char demo_host_version[];	/* property template version */
+extern char demo_host_version[];
 
-/* 系统指令和查询指令 */
-void RequeryDeviceStatus(void);
-void RequeryTimerInfo(void);
-void RequeryLifeTime(void);
-void RequeryFWVersion(void);
-
-void SendNetWorkStatus(unsigned char NetConnetFlag);
-void SendCloudStatus(unsigned char CloudStatus);
-
-void releasewakelock(void);
-void acquirewakelock(void);
-void sysreleasewakelock(void);
-
+/* 定义属性的位置 */
+enum PropPost {
+	PP_oem_host_version,
+	PP_version,
+	PP_t_work_mode,
+	PP_t_room_mode,
+	PP_t_control,
+	PP_t_search,
+	PP_t_factory_reset,
+	PP_t_realtime_info,
+	PP_t_d_strength,
+	PP_t_p_strength,
+	PP_t_sound,
+	PP_t_light,
+	PP_t_reset_edge_brush,
+	PP_t_reset_roll_brush,
+	PP_t_reset_filter,
+	PP_t_reset_duster,
+	PP_t_reset_power,
+	PP_t_timer_0,
+	PP_t_timer_1,
+	PP_t_timer_2,
+	PP_t_timer_3,
+	PP_t_timer_4,
+	PP_t_timer_5,
+	PP_t_timer_6,
+	PP_t_timer_7,
+	PP_t_timer_8,
+	PP_t_timer_9,
+	PP_f_clean_mode,
+	PP_f_battery,
+	PP_f_error,
+	PP_f_edge_brush_lifetime,
+	PP_f_roll_brush_lifetime,
+	PP_f_filter_lifetime,
+	PP_f_duster_lifetime,
+	PP_f_battery_lifetime,
+	PP_f_work_time,
+	PP_f_water_box_time,
+	PP_f_dustbin_time,
+	PP_f_mul_box_time,
+	PP_f_upload_realmap_switch,
+	PP_f_clean_record,
+	PP_f_upload_realmap_starttime,
+	PP_f_realtime_mapinfo
+};
 
 #endif
 

@@ -2773,6 +2773,12 @@ void conf_cli(int argc, char **argv)
 		conf_save_config();
 		return;
 	}
+
+	if (argc == 2 && !strcmp(argv[1], "showprop")) {
+		PrintPropSendDoneFlag();
+		return;
+	}
+	
 	printcli("usage: conf show [name]\n"
 	    "       conf save\n");
 }

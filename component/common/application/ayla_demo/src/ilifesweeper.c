@@ -23,38 +23,50 @@
 #include "gpio_irq_api.h"
 #include "ilifesweeper.h"
 
+/*
+ * Log message severity prefix.
+ */
+#define LOG_INFO_RF	"\x81"
+#define LOG_WARN_RF	"\x82"
+#define LOG_ERR_RF		"\x83"
+#define LOG_DEBUG_RF	"\x84"
+#define LOG_FAIL_RF	"\x85"
+#define LOG_PASS_RF	"\x86"
+#define LOG_METRIC_RF	"\x87"
+#define LOG_DEBUG2_RF	"\x89"
+#define LOG_BASE_RF	0x80
 
 /* 定义循环发送buffer */
 SECTION(".sdram.data") struct RingSendBuffer_t RingSendBuffer[SENDBUFFERMAXLEN] = {0};
-unsigned char R_CurSor = 0;	/* 读位置 */
-unsigned char W_CurSor = 0;	/* 写位置 */
-unsigned char DataNum = 0;	/* 环形缓存区中的元素总数量 */
+SECTION(".sdram.data") unsigned char R_CurSor = 0;	/* 读位置 */
+SECTION(".sdram.data") unsigned char W_CurSor = 0;	/* 写位置 */
+SECTION(".sdram.data") unsigned char DataNum = 0;	/* 环形缓存区中的元素总数量 */
 /* 定义接收循环buffer */
 SECTION(".sdram.data") struct RingRecvBuffer_t RingRecvBuffer[RECVBUFFERMAXLEN] = {0};
-unsigned char R_CurSorRecv = 0;	/* 读位置 */
-unsigned char W_CurSorRecv = 0;	/* 写位置 */
-unsigned char DataNumRecv = 0;	/* 环形缓存区中的元素总数量 */
+SECTION(".sdram.data") unsigned char R_CurSorRecv = 0;	/* 读位置 */
+SECTION(".sdram.data") unsigned char W_CurSorRecv = 0;	/* 写位置 */
+SECTION(".sdram.data") unsigned char DataNumRecv = 0;	/* 环形缓存区中的元素总数量 */
 
 serial_t sobj;
 gtimer_t SweeperTimer;
 #define UART_TX    PA_7
 #define UART_RX    PA_6
 
-unsigned char RecvCharTemp = 0;
-unsigned char UartStatus = UartNOP;
-unsigned char UartRxOkFlag = 0;
-SECTION(".sdram.data") static unsigned char RecvBuffer[RecvMAXLen] = {0};
-unsigned short UartRecvLen = 0;
-unsigned short UartDataLen = 0;		/* 数据包中整个数据包的长度（包括包头、包长度、 包长度、 保留位、 保留位、功能码、数据、校验和、包尾） */
-unsigned char CalCRC = 0;	/* 计算出来的CRC数据 */
-unsigned char RecvCRC = 0;	/* 接收到的CRC数据 */
-unsigned char UartIrqRecvTimeOut = 0;	/* 串口中断接收超时标志，防止发送错误数据的时候影响下一帧的接收 */
+SECTION(".sdram.data") unsigned char RecvCharTemp = 0;
+SECTION(".sdram.data") unsigned char UartStatus = UartNOP;
+SECTION(".sdram.data") unsigned char UartRxOkFlag = 0;
+SECTION(".sdram.data") unsigned char RecvBuffer[RecvMAXLen] = {0};
+SECTION(".sdram.data") unsigned short UartRecvLen = 0;
+SECTION(".sdram.data") unsigned short UartDataLen = 0;		/* 数据包中整个数据包的长度（包括包头、包长度、 包长度、 保留位、 保留位、功能码、数据、校验和、包尾） */
+SECTION(".sdram.data") unsigned char CalCRC = 0;	/* 计算出来的CRC数据 */
+SECTION(".sdram.data") unsigned char RecvCRC = 0;	/* 接收到的CRC数据 */
+SECTION(".sdram.data") unsigned char UartIrqRecvTimeOut = 0;	/* 串口中断接收超时标志，防止发送错误数据的时候影响下一帧的接收 */
 
 /* 串口发送时单片机的回复命令 */
-unsigned char SendRespondCMD = 0x00;
+SECTION(".sdram.data") unsigned char SendRespondCMD = 0x00;
 
-/* 进入低功耗标志位 */
-unsigned char AutoEnterLowpower = 0;
+/* 进入低功耗标志位,用于检测唤醒多少秒之后没有进入低功耗的，则自动进入低功耗 */
+SECTION(".sdram.data") unsigned char AutoEnterLowpower = 0;
 
 /* base64编码 */
 int ilife_ayla_base64_encode(const void *in_buf, size_t inlen,
@@ -68,7 +80,7 @@ int ilife_ayla_base64_encode(const void *in_buf, size_t inlen,
 
 	/* valid output size ? */
 	len2 = 4 * ((inlen + 2) / 3);
-	printf("*outlen = %d, len2 = %d\n", *outlen, len2);
+	log_put(LOG_INFO_RF "*outlen = %d, len2 = %d", *outlen, len2);
 	if (*outlen < len2 + 1) {
 		return -1;
 	}
@@ -113,16 +125,16 @@ void UartSendFormData(const unsigned char *SendFormData, unsigned short Len)
 	SendDataTem[SendDataLen++] = ((Len + 7)>>0) & 0xFF;		//包长低八位
 	CRCTem += SendDataTem[SendDataLen - 1];
 	
-	SendDataTem[SendDataLen++] = 0x00;			//保留位
+	SendDataTem[SendDataLen++] = 0x00;						//保留位
 	CRCTem += SendDataTem[SendDataLen - 1];
-	SendDataTem[SendDataLen++] = 0x00;			//保留位
+	SendDataTem[SendDataLen++] = 0x00;						//保留位
 	CRCTem += SendDataTem[SendDataLen - 1];
 	
-	SendDataTem[SendDataLen++] = SendFormData[0];					//功能码
+	SendDataTem[SendDataLen++] = SendFormData[0];			//功能码
 	CRCTem += SendDataTem[SendDataLen - 1];
 
 	for(i = 0; i < Len - 1; i++){
-		SendDataTem[SendDataLen++] = SendFormData[i + 1];		//数据
+		SendDataTem[SendDataLen++] = SendFormData[i + 1];	//数据
 		CRCTem += SendDataTem[SendDataLen - 1];
 	}
 
@@ -130,7 +142,12 @@ void UartSendFormData(const unsigned char *SendFormData, unsigned short Len)
 	SendDataTem[SendDataLen++] = F_END;						//包尾
 
 	//开始发送数据
-	PRINTFSendBuffer(SendDataTem, SendDataLen);
+	printf("Send Data:");
+	for(i = 0; i < SendDataLen; i++)
+	{
+		printf("%02x ", SendDataTem[i]);
+	}
+	printf("\n");
 	
 	for(i = 0; i < SendDataLen; i++)
 	{
@@ -138,19 +155,22 @@ void UartSendFormData(const unsigned char *SendFormData, unsigned short Len)
 	}
 }
 
+
 /* 擦除模组]wifi信息 */
 void ForceWifiErase(void)
 {
 	int i = 0;
 	
-	vTaskDelay(2000);	//2s
+	vTaskDelay(1000);	//1s
 	for(i = 0; i < 11; i++)
 	{
 		adw_wifi_profile_erase(i);
+		vTaskDelay(50);
 	}
 	
 	conf_save_config();
-	printf("Wifi erase ok.\n");
+	log_put(LOG_INFO_RF "Wifi erase ok.\n");
+	vTaskDelay(2000);
 	ada_conf_reset(0);
 }
 
@@ -198,11 +218,13 @@ void SendWifiSignal(unsigned char Signal)
 	UartSendFormData(Data, 2);
 }
 
-
-/* 串口接收数据处理，传进来的数据包括帧头帧尾的一整帧数据 */
+/*************************************************************************************
+*	串口接收数据处理，传进来的数据包括帧头帧尾的一整帧数据 
+*************************************************************************************/
 void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Length)
 {
 	int i;
+	int VersionLen = 0; 
 	unsigned int MapDataLen_encode = 686;
 	unsigned char AckSendData[10] = {0};	/* 返回单片机的Data */
 	static unsigned char CMDUpLoadAppointmentInfoChange = 0;
@@ -211,11 +233,11 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 	unsigned int LocalToUTCtime;
 	unsigned int NTP_utc = 0;	//utc时间
 	unsigned int NTP_local = 0;	//本地时间
-
-	int WifiSignal;	//WIFI的信号质量
-
-	unsigned char *mac;
 	
+	int WifiSignal;				//WIFI的信号质量
+	
+	unsigned char *mac;
+
 	printf("Recv Data:");
 	for(i = 0; i < Length; i++)
 	{
@@ -227,49 +249,47 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 	{
 		//上传指令
 		case CMDUpLoadStatus:
-			if(t_work_mode != Data[6]){
-				t_work_mode = Data[6];
-				prop_send_by_name("t_work_mode");
-			}
+			t_work_mode = Data[6];
+			prop_send_by_name("t_work_mode", PP_t_work_mode);
 
 			if(t_room_mode != Data[7]){
 				t_room_mode = Data[7];
-				prop_send_by_name("t_room_mode");
+				prop_send_by_name("t_room_mode", PP_t_room_mode);
 			}
 
 			if(f_clean_mode != Data[8]){
 				f_clean_mode = Data[8];
-				prop_send_by_name("f_clean_mode");
+				prop_send_by_name("f_clean_mode", PP_f_clean_mode);
 			}
 
 			if(t_d_strength != Data[9]){
 				t_d_strength = Data[9];
-				prop_send_by_name("t_d_strength");
+				prop_send_by_name("t_d_strength", PP_t_d_strength);
 			}
 
 			if(t_p_strength != Data[10]){
 				t_p_strength = Data[10];
-				prop_send_by_name("t_p_strength");
+				prop_send_by_name("t_p_strength", PP_t_p_strength);
 			}
 
 			if(f_battery != Data[11]){
 				f_battery = Data[11];
-				prop_send_by_name("f_battery");
+				prop_send_by_name("f_battery", PP_f_battery);
 			}
 
 			if(t_sound != Data[12]){
 				t_sound = Data[12];
-				prop_send_by_name("t_sound");
+				prop_send_by_name("t_sound", PP_t_sound);
 			}
 
 			if(t_light != Data[13]){
 				t_light = Data[13];
-				prop_send_by_name("t_light");
+				prop_send_by_name("t_light", PP_t_light);
 			}
 
 			if(ff_error != Data[14]){
 				ff_error = Data[14];
-				prop_send_by_name("f_error");
+				prop_send_by_name("f_error", PP_f_error);
 			}
 			
 			AckSendData[0] = CMD;
@@ -291,7 +311,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			if(memcmp(f_clean_record_temp, f_clean_record, 16) != 0)
 			{
 				memcpy(f_clean_record, f_clean_record_temp, 16);
-				prop_send_by_name("f_clean_record");
+				prop_send_by_name("f_clean_record", PP_f_clean_record);
 			}
 
 			AckSendData[0] = CMD;
@@ -301,7 +321,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 
 		case CMDUpLoadMapInfo:
 			if((Length - 8) > 512){
-				printf("Map Data too length.Length = %d\n", Length - 8);
+				log_put(LOG_ERR_RF "Map Data too length.Length = %d\n", Length - 8);
 				break;
 			}
 			ilife_ayla_base64_encode(&Data[6], Length - 8, f_realtime_mapinfo, &MapDataLen_encode);
@@ -314,7 +334,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			printf("\n");
 			#endif
 			
-			prop_send_by_name("f_realtime_mapinfo");
+			prop_send_by_name("f_realtime_mapinfo", PP_f_realtime_mapinfo);
 			
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -324,22 +344,22 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadSumTime:
 			if(f_work_time !=( (Data[6] << 8) | Data[7])){
 				f_work_time = ((Data[6] << 8) | Data[7]);
-				prop_send_by_name("f_work_time");
+				prop_send_by_name("f_work_time", PP_f_work_time);
 			}
 
 			if(f_water_box_time != ((Data[8] << 8) | Data[9])){
 				f_water_box_time = ((Data[8] << 8) | Data[9]);
-				prop_send_by_name("f_water_box_time");
+				prop_send_by_name("f_water_box_time", PP_f_water_box_time);
 			}
 
 			if(f_dustbin_time != ((Data[10] << 8) | Data[11])){
 				f_dustbin_time = ((Data[10] << 8) | Data[11]);
-				prop_send_by_name("f_dustbin_time");
+				prop_send_by_name("f_dustbin_time", PP_f_dustbin_time);
 			}
 
 			if(f_mul_box_time != ((Data[12] << 8) | Data[13])){
 				f_mul_box_time =( (Data[12] << 8) | Data[13]);
-				prop_send_by_name("f_mul_box_time");
+				prop_send_by_name("f_mul_box_time", PP_f_mul_box_time);
 			}
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -347,10 +367,10 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			break;
 
 		case CMDUpLoadFactoryReset:
-			if(t_factory_reset != Data[6]){
-				t_factory_reset = Data[6];
-				prop_send_by_name("t_factory_reset");
-			}
+			//if(t_factory_reset != Data[6]){
+			//t_factory_reset = Data[6];
+			//prop_send_by_name("t_factory_reset", PP_t_factory_reset);
+			//}
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
 			UartSendFormData(AckSendData, 2);
@@ -363,27 +383,27 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadLifeTime:
 			if(f_edge_brush_lifetime != Data[6]){
 				f_edge_brush_lifetime = Data[6];
-				prop_send_by_name("f_edge_brush_lifetime");
+				prop_send_by_name("f_edge_brush_lifetime", PP_f_edge_brush_lifetime);
 			}
 
 			if(f_roll_brush_lifetime != Data[7]){
 				f_roll_brush_lifetime = Data[7];
-				prop_send_by_name("f_roll_brush_lifetime");
+				prop_send_by_name("f_roll_brush_lifetime", PP_f_roll_brush_lifetime);
 			}
 
 			if(f_filter_lifetime != Data[8]){
 				f_filter_lifetime = Data[8];
-				prop_send_by_name("f_filter_lifetime");
+				prop_send_by_name("f_filter_lifetime", PP_f_filter_lifetime);
 			}
 			
 			if(f_duster_lifetime != Data[9]){
 				f_duster_lifetime = Data[9];
-				prop_send_by_name("f_duster_lifetime");
+				prop_send_by_name("f_duster_lifetime", PP_f_duster_lifetime);
 			}
 
 			if(f_battery_lifetime != Data[10]){
 				f_battery_lifetime = Data[10];
-				prop_send_by_name("f_battery_lifetime");
+				prop_send_by_name("f_battery_lifetime", PP_f_battery_lifetime);
 			}
 
 			AckSendData[0] = CMD;
@@ -402,7 +422,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_0");
+				prop_send_by_name("t_timer_0", PP_t_timer_0);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -414,7 +434,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_1");
+				prop_send_by_name("t_timer_1", PP_t_timer_1);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -426,7 +446,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_2");
+				prop_send_by_name("t_timer_2", PP_t_timer_2);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 
@@ -438,7 +458,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_3");
+				prop_send_by_name("t_timer_3", PP_t_timer_3);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -450,7 +470,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_4");
+				prop_send_by_name("t_timer_4", PP_t_timer_4);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -462,7 +482,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_5");
+				prop_send_by_name("t_timer_5", PP_t_timer_5);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -474,7 +494,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_6");
+				prop_send_by_name("t_timer_6", PP_t_timer_6);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -486,7 +506,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_7");
+				prop_send_by_name("t_timer_7", PP_t_timer_7);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -498,7 +518,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_8");
+				prop_send_by_name("t_timer_8", PP_t_timer_8);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 			
@@ -510,7 +530,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 				}
 			}
 			if(CMDUpLoadAppointmentInfoChange != 0){
-				prop_send_by_name("t_timer_9");
+				prop_send_by_name("t_timer_9", PP_t_timer_9);
 				CMDUpLoadAppointmentInfoChange = 0;
 			}
 
@@ -522,27 +542,27 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadReset:
 			if(t_reset_edge_brush != Data[6]){
 				t_reset_edge_brush = Data[6];
-				prop_send_by_name("t_reset_edge_brush");
+				prop_send_by_name("t_reset_edge_brush", PP_t_reset_edge_brush);
 			}
 
 			if(t_reset_roll_brush != Data[7]){
 				t_reset_roll_brush = Data[7];
-				prop_send_by_name("t_reset_roll_brush");
+				prop_send_by_name("t_reset_roll_brush", PP_t_reset_roll_brush);
 			}
 
 			if(t_reset_filter != Data[8]){
 				t_reset_filter = Data[8];
-				prop_send_by_name("t_reset_filter");
+				prop_send_by_name("t_reset_filter", PP_t_reset_filter);
 			}
 
 			if(t_reset_duster != Data[9]){
 				t_reset_duster = Data[9];
-				prop_send_by_name("t_reset_duster");
+				prop_send_by_name("t_reset_duster", PP_t_reset_duster);
 			}
 
 			if(t_reset_power != Data[10]){
 				t_reset_power = Data[10];
-				prop_send_by_name("t_reset_power");
+				prop_send_by_name("t_reset_power", PP_t_reset_power);
 			}
 
 			AckSendData[0] = CMD;
@@ -553,7 +573,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadSearch:
 			if(t_search != Data[6]){
 				t_search = Data[6];
-				prop_send_by_name("t_search");
+				prop_send_by_name("t_search", PP_t_search);
 			}
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -563,7 +583,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadControl:
 			if(t_control != Data[6]){
 				t_control = Data[6];
-				prop_send_by_name("t_control");
+				prop_send_by_name("t_control", PP_t_control);
 			}
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -576,7 +596,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			memcpy(version, version_temp, strlen(version_temp));
 			strncat(version, MCUFWversion, 12);
 
-			prop_send_by_name("version");
+			prop_send_by_name("version", PP_version);
 			
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -593,11 +613,13 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			f_upload_realmap_starttime[12] = Data[12];	//分
 			f_upload_realmap_starttime[14] = Data[13];	//秒
 
+			#if 0
 			printf("Recv f_upload_realmap_starttime:");
 			for(i = 0; i < 16; i++){
 				printf("%02x ", f_upload_realmap_starttime[i]);
 			}
 			printf("\n");
+			#endif
 			//年月日时分秒
 			clock_ints_to_time(&LocalToUTCtime, f_upload_realmap_starttime[0] << 8 | f_upload_realmap_starttime[2], f_upload_realmap_starttime[4], 
 				f_upload_realmap_starttime[6], f_upload_realmap_starttime[10], f_upload_realmap_starttime[12], f_upload_realmap_starttime[14]);
@@ -615,7 +637,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			sprintf(&f_upload_realmap_starttime[10], "%02x", clk.hour);
 			sprintf(&f_upload_realmap_starttime[12], "%02x", clk.min);
 			sprintf(&f_upload_realmap_starttime[14], "%02x", clk.sec);
-			prop_send_by_name("f_upload_realmap_starttime");
+			prop_send_by_name("f_upload_realmap_starttime", PP_f_upload_realmap_starttime);
 
 			AckSendData[0] = CMD;
 			AckSendData[1] = 0x00;
@@ -625,7 +647,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 		case CMDUpLoadRealInfoSwitch:
 			if(t_realtime_info != Data[6]){
 				t_realtime_info = Data[6];
-				prop_send_by_name("t_realtime_info");
+				prop_send_by_name("t_realtime_info", PP_t_realtime_info);
 			}
 
 			AckSendData[0] = CMD;
@@ -690,15 +712,15 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			t_light = Data[13];
 			ff_error = Data[14];
 			
-			prop_send_by_name("t_work_mode");
-			prop_send_by_name("t_room_mode");
-			prop_send_by_name("f_clean_mode");
-			prop_send_by_name("t_d_strength");
-			prop_send_by_name("t_p_strength");
-			prop_send_by_name("f_battery");
-			prop_send_by_name("t_sound");
-			prop_send_by_name("t_light");
-			prop_send_by_name("f_error");
+			prop_send_by_name("t_work_mode", PP_t_work_mode);
+			prop_send_by_name("t_room_mode", PP_t_room_mode);
+			prop_send_by_name("f_clean_mode", PP_f_clean_mode);
+			prop_send_by_name("t_d_strength", PP_t_d_strength);
+			prop_send_by_name("t_p_strength", PP_t_p_strength);
+			prop_send_by_name("f_battery", PP_f_battery);
+			prop_send_by_name("t_sound", PP_t_sound);
+			prop_send_by_name("t_light", PP_t_light);
+			prop_send_by_name("f_error", PP_f_error);
 	
 			SendRespondCMD = CMD;
 			break;
@@ -707,52 +729,52 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_0[i*2], "%02x", Data[6 + i]);
 			}
-			prop_send_by_name("t_timer_0");
+			prop_send_by_name("t_timer_0", PP_t_timer_0);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_1[i*2], "%02x", Data[11 + i]);
 			}
-			prop_send_by_name("t_timer_1");
+			prop_send_by_name("t_timer_1", PP_t_timer_1);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_2[i*2], "%02x", Data[16 + i]);
 			}
-			prop_send_by_name("t_timer_2");
+			prop_send_by_name("t_timer_2", PP_t_timer_2);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_3[i*2], "%02x", Data[21 + i]);
 			}
-			prop_send_by_name("t_timer_3");
+			prop_send_by_name("t_timer_3", PP_t_timer_3);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_4[i*2], "%02x", Data[26 + i]);
 			}
-			prop_send_by_name("t_timer_4");
+			prop_send_by_name("t_timer_4", PP_t_timer_4);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_5[i*2], "%02x", Data[31 + i]);
 			}
-			prop_send_by_name("t_timer_5");
+			prop_send_by_name("t_timer_5", PP_t_timer_5);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_6[i*2], "%02x", Data[36 + i]);
 			}
-			prop_send_by_name("t_timer_6");
+			prop_send_by_name("t_timer_6", PP_t_timer_6);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_7[i*2], "%02x", Data[41 + i]);
 			}
-			prop_send_by_name("t_timer_7");
+			prop_send_by_name("t_timer_7", PP_t_timer_7);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_8[i*2], "%02x", Data[46 + i]);
 			}
-			prop_send_by_name("t_timer_8");
+			prop_send_by_name("t_timer_8", PP_t_timer_8);
 			
 			for(i = 0; i < 5; i++){
 				sprintf(&t_timer_9[i*2], "%02x", Data[51 + i]);
 			}
-			prop_send_by_name("t_timer_9");
+			prop_send_by_name("t_timer_9", PP_t_timer_9);
 			
 			SendRespondCMD = CMD;
 			break;
@@ -764,11 +786,11 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			f_duster_lifetime = Data[9];
 			f_battery_lifetime = Data[10];
 
-			prop_send_by_name("f_edge_brush_lifetime");
-			prop_send_by_name("f_roll_brush_lifetime");
-			prop_send_by_name("f_filter_lifetime");
-			prop_send_by_name("f_duster_lifetime");
-			prop_send_by_name("f_battery_lifetime");
+			prop_send_by_name("f_edge_brush_lifetime", PP_f_edge_brush_lifetime);
+			prop_send_by_name("f_roll_brush_lifetime", PP_f_roll_brush_lifetime);
+			prop_send_by_name("f_filter_lifetime", PP_f_filter_lifetime);
+			prop_send_by_name("f_duster_lifetime", PP_f_duster_lifetime);
+			prop_send_by_name("f_battery_lifetime", PP_f_battery_lifetime);
 	
 			SendRespondCMD = CMD;
 			break;
@@ -779,7 +801,7 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			memcpy(version, version_temp, strlen(version_temp));
 			strncat(version, MCUFWversion, 12);
 
-			prop_send_by_name("version");
+			prop_send_by_name("version", PP_version);
 			
 			SendRespondCMD = CMD;
 			break;
@@ -810,12 +832,14 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			break;
 			
 		case CMDSysQueryNTP:
-			NTP_utc = clock_utc();	//获取utc时间
-			NTP_local = clock_local(&NTP_utc);//获取本地时间
-			clock_fill_details(&clk, NTP_local);
-			SendSysNTP(clk, NTP_local);
-			//printf("%4.4lu-%2.2u-%2.2uT%2.2u:%2.2u:%2.2u  %2.2u, NTP=%lu, NTP_LOCAL=%lu\n\n",
-			//	    clk.year, clk.month, clk.days, clk.hour, clk.min, clk.sec, clk.day_of_week, NTP_utc, NTP_local);
+			if((Data[6] == 0xF0) && (Data[7] == 0x0F) ){
+				NTP_utc = clock_utc();	//获取utc时间
+				NTP_local = clock_local(&NTP_utc);//获取本地时间
+				clock_fill_details(&clk, NTP_local);
+				SendSysNTP(clk, NTP_local);
+				//printf("%4.4lu-%2.2u-%2.2uT%2.2u:%2.2u:%2.2u  %2.2u, NTP=%lu, NTP_LOCAL=%lu\n\n",
+				//	    clk.year, clk.month, clk.days, clk.hour, clk.min, clk.sec, clk.day_of_week, NTP_utc, NTP_local);
+			}
 			break;
 			
 		case CMDSysGetSigQuality:
@@ -846,6 +870,19 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 
 		case CMDRequerySWVersion:
 			AckSendData[0] = CMD;
+			/* get host version */
+			for(i = 0; i < strlen(demo_host_version); i++){
+				AckSendData[1 + i] = demo_host_version[i];
+			}
+			VersionLen = i + 1;
+
+			/* get mcu version */
+			for(i = 0; i < strlen(MCUFWversion); i++){
+				AckSendData[VersionLen + i] = MCUFWversion[i];
+			}
+
+			VersionLen = VersionLen + i;
+			#if 0
 			AckSendData[1] = demo_host_version[0];
 			AckSendData[2] = demo_host_version[1];
 			AckSendData[3] = demo_host_version[2];
@@ -854,25 +891,24 @@ void ProtocalUartData(unsigned char CMD, unsigned char *Data, unsigned short Len
 			AckSendData[6] = demo_host_version[5];
 			AckSendData[7] = demo_host_version[6];
 			AckSendData[8] = demo_host_version[7];
-
-			UartSendFormData(AckSendData, 9);
-			printf("SW version:%s", demo_host_version);
-			//UartSendFormData(CMDRequerySWVersion, &demo_host_version[0], &Reserve[0], 8);
+			#endif
+			
+			UartSendFormData(AckSendData,  VersionLen);
+			log_put(LOG_INFO_RF "host SW version:%s, MCU version:%s", demo_host_version, MCUFWversion);
 			break;
 
 		default:
-			printf("Recv unknow CMD.\n");
+			log_put(LOG_ERR_RF "Recv unknow CMD.\n");
 			break;
 	}
 }
-/**************************************************************************************/
+/***************************************************************************************/
 /* 增加缓存区的读写下标 */
 unsigned char AddRing (unsigned char i)
 {
        return (i+1) == SENDBUFFERMAXLEN ? 0 : i+1;
 }
 
-/* 写数据到环形缓冲区 */
 void WriteRingBuffer(unsigned char *Data, unsigned short Len)
 {
 	if(DataNum < SENDBUFFERMAXLEN)
@@ -886,7 +922,7 @@ void WriteRingBuffer(unsigned char *Data, unsigned short Len)
 	}
 	else
 	{
-		printf("Ring Buffer is full.\n");
+		log_put(LOG_ERR_RF "Ring Buffer is full.\n");
 	}
 }
 
@@ -894,7 +930,6 @@ void WriteRingBuffer(unsigned char *Data, unsigned short Len)
 void ReadRingBuffer(void)
 {
 	unsigned char ReadPos;
-	int i;
 	int cnt = 0;
 	
 	if(DataNum > 0)
@@ -908,7 +943,7 @@ void ReadRingBuffer(void)
 			}
 
 			if(cnt > SENDCNT){
-				printf("Data is Send, But MCU not Respond.CMD = %02x\n", RingSendBuffer[ReadPos].Data[0]);
+				log_put(LOG_ERR_RF "Data is Send, But MCU not Respond.CMD = %02x\n", RingSendBuffer[ReadPos].Data[0]);
 				break;
 			}
 			cnt++;
@@ -918,9 +953,8 @@ void ReadRingBuffer(void)
 		R_CurSor = AddRing(R_CurSor);
 		DataNum--;
 	}
-	else
-	{
-		printf("Ring Buffer is empty.\b");
+	else{
+		log_put(LOG_ERR_RF "Ring Buffer is empty.\b");
 	}
 }
 
@@ -935,8 +969,7 @@ unsigned char AddRingRecv(unsigned char i)
 /* 写数据到环形缓冲区 */
 void WriteRingBufferRecv(unsigned char *Data, unsigned short Len)
 {
-	if(DataNumRecv < RECVBUFFERMAXLEN)
-	{
+	if(DataNumRecv < RECVBUFFERMAXLEN){
 		RingRecvBuffer[W_CurSorRecv].CMD = Data[5];
 		memcpy(RingRecvBuffer[W_CurSorRecv].Data, &Data[0], Len);
 		RingRecvBuffer[W_CurSorRecv].Length = Len;
@@ -945,9 +978,8 @@ void WriteRingBufferRecv(unsigned char *Data, unsigned short Len)
 		DataNumRecv++;
 		
 	}
-	else
-	{
-		printf("Ring Recv Buffer is full.\n");
+	else{
+		log_put(LOG_ERR_RF "Ring Recv Buffer is full.\n");
 	}
 }
 
@@ -955,23 +987,20 @@ void WriteRingBufferRecv(unsigned char *Data, unsigned short Len)
 void ReadRingBufferRecv(void)
 {
 	unsigned char ReadPos;
-	int i;
 	
-	if(DataNumRecv > 0)
-	{
+	if(DataNumRecv > 0){
 		ReadPos = R_CurSorRecv;
 		ProtocalUartData(RingRecvBuffer[ReadPos].CMD, RingRecvBuffer[ReadPos].Data, RingRecvBuffer[ReadPos].Length);
 		/* 应该在处理完数据之后再移动坐标 */
 		R_CurSorRecv = AddRingRecv(R_CurSorRecv);
 		DataNumRecv--;
 	}
-	else
-	{
-		printf("Ring Recv Buffer is empty.\b");
+	else{
+		log_put(LOG_ERR_RF "Ring Recv Buffer is empty.\b");
 	}
 }
 
-/**************************************************************************************/
+/***********************************串口数据的发送和接收处理线程*****************************/
 static void SendBufferHandler( void *pvParameters )
 {
 	while(1)
@@ -996,8 +1025,7 @@ static void RecvBufferHandler( void *pvParameters )
 	}
 }
 
-/**************************************************************************************/
-/* 串口 */
+/************************************ 串口相关的初始化 *************************************/
 void ILIFEUartIRQ(uint32_t id, SerialIrq event)
 {
 	serial_t    *sobj = (void*)id;
@@ -1112,7 +1140,7 @@ void ILIFEUartIRQ(uint32_t id, SerialIrq event)
 					UartIrqRecvTimeOut = 0;
 				}else
 				{
-					printf("Recv CRC Error or Frame END Error.Recv CRC=%02x, expect CRC=%02x, Frame END = %02x\n", RecvCRC, CalCRC, RecvCharTemp);
+					log_put(LOG_ERR_RF "Recv CRC Error or Frame END Error.Recv CRC=%02x, expect CRC=%02x, Frame END = %02x\n", RecvCRC, CalCRC, RecvCharTemp);
 
 					/* init */
 					UartIrqRecvTimeOut=0;
@@ -1130,13 +1158,13 @@ void ILIFEUartIRQ(uint32_t id, SerialIrq event)
 	}
 }
 
-/* 在定时器里面调用，接受超时 */
+/* 在定时器里面调用，接收超时 */
 void UartErrorRecvTimeout(void)
 {	
 	if(UartIrqRecvTimeOut != 0)	
 	{		
 		UartIrqRecvTimeOut++;	
-		if(UartIrqRecvTimeOut > 4)
+		if(UartIrqRecvTimeOut > 10)	/* 1000ms没有接收完成则丢弃该帧数据 */
 		{
 			/* init */
 			UartIrqRecvTimeOut=0;
@@ -1177,25 +1205,29 @@ void timer1_timeout_handler(unsigned int TimeOut)
 	if(AutoEnterLowpower > 0)
 	{
 		AutoEnterLowpower++;
-		if(AutoEnterLowpower > 40)
-		{	/* 唤醒4秒还没有动作，自动进入低功耗 */
+		if(AutoEnterLowpower > 50)
+		{	/* 唤醒5秒还没有动作，自动进入低功耗 */
 			AutoEnterLowpower = 0;
 			releasewakelock();
 		}
 	}
 }
 
+/* gpio中断处理函数 */
 void GpioUartRXIrqCallback (uint32_t id, gpio_irq_event event)
 {
 	acquirewakelock();
 }
 
+/* 看门狗中断处理函数 */
 void ilife_watchdog_irq_handler(uint32_t id)
 {
-	printf("!!!!!!watchdog barks!!!!!!\r\n");
+	log_put(LOG_ERR_RF "!!!!!!watchdog barks!!!!!!\r\n");
 	ada_conf_reset(0);
 }
 
+
+/********************************* 相关初始化函数 ********************************/
 void ILIFESweeperInit(void)
 {
 	gpio_irq_t GpioRXWakeup;
@@ -1232,7 +1264,12 @@ void ILIFESweeperInit(void)
 	memset(version, 0x00, 64);
 	memcpy(version, version_temp, strlen(version_temp));
 	printf("SweeperInit OK. version: %s, %s\n", demo_host_version, version);
+
+	/* 使系统进入低功耗状态 */
+	sysreleasewakelock();
+	releasewakelock();
 }
+
 
 /* 设备查询接口 */
 /* 查询设备状态信息 */
@@ -1308,5 +1345,20 @@ void SendCloudStatus(unsigned char CloudStatus)
 		Data[2] = 0x1F;
 	}
 	WriteRingBuffer(Data, 3);
+}
+
+/* 发送时间给扫地机 */
+void SentNTPToSweeper(void)
+{
+	struct clock_info clk;
+	unsigned int NTP_utc = 0;	//utc时间
+	unsigned int NTP_local = 0;	//本地时间
+	
+	NTP_utc = clock_utc();	//获取utc时间
+	NTP_local = clock_local(&NTP_utc);//获取本地时间
+	clock_fill_details(&clk, NTP_local);
+	SendSysNTP(clk, NTP_local);
+	//printf("%4.4lu-%2.2u-%2.2uT%2.2u:%2.2u:%2.2u  %2.2u, NTP=%lu, NTP_LOCAL=%lu\n\n",
+	//	    clk.year, clk.month, clk.days, clk.hour, clk.min, clk.sec, clk.day_of_week, NTP_utc, NTP_local);
 }
 

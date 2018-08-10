@@ -29,7 +29,6 @@ enum ada_err {
 	AE_INVAL_NAME = -16,	/* invalid property name */
 	AE_RDONLY = -17,	/* ADA tried to set a from-device property */
 	AE_CERT_EXP = -18	/* SSL certificate not valid due to time */
-	/* -19,属性名下发失败 */
 	/* Note: update ADA_ERR_STRINGS table below when adding new values */
 };
 

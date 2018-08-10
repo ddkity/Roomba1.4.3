@@ -109,6 +109,12 @@ const char ada_version[] = "ADA-" BUILD_SDK " " ADA_VERSION BUILD_NAME;
 
 struct client_state client_state;
 
+//add by yujunwu
+int g_first_get_cmds = 0;
+
+//add by huangjituan
+int g_TimezoneChange = 0;
+
 static void client_down_locked(void);
 static void client_start(struct client_state *, struct http_client *);
 static void client_commit_server(struct client_state *state);
@@ -2176,6 +2182,12 @@ enum ada_err client_recv_cmds(struct http_client *hc, void *payload, size_t len)
 
 	client_log(LOG_DEBUG "client_recv_cmds GET done");
 
+	// add by yujunwu
+	if(0 == g_first_get_cmds){
+		g_first_get_cmds = 1;
+		client_log(LOG_INFO "\n\ng_first_get_cmds set to 1.client_recv_cmds GET done\n\n");
+	}
+	
 	client_timer_cancel(&state->cmd_timer);
 
 	state->get_cmds_fail = 0;
