@@ -41,8 +41,9 @@
 	1.1.9	修改恢复出厂之后等一秒钟再重启设置，保证离线的信息能够发到扫地机
 	2.0.0	修改恢复出厂设置的时候的操作
 	2.0.1	增加在设备更新时区的时候，把时间信息发送到扫地机
+	2.0.2	把每10秒钟上传一次电池电量的功能给去掉了
 ***************************************************************/
-#define BUILD_VERSION "2.0.1"
+#define BUILD_VERSION "2.0.2"
 #define BUILD_STRING	BUILD_VERSION " "  __DATE__ " " __TIME__
 
 //const char mod_sw_build[] = BUILD_STRING;
@@ -614,7 +615,7 @@ void demo_idle(void)
 		vTaskDelay(100);
 		
 		TimeCnt++;
-		if(TimeCnt > 80)		/* 9秒钟更新一次*/
+		if(TimeCnt > 6000)		/* 10分钟更新一次，为了同步时间 */
 		{
 			prop_send_by_name("f_battery", PP_f_battery);
 			TimeCnt = 0;
@@ -678,8 +679,6 @@ void demo_idle(void)
 			SentNTPToSweeper();
 			g_TimezoneChange = 0;
 		}
-
-		
 	}
 }
 
